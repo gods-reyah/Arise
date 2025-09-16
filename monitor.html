@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registrations Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            /* Light theme */
+            --bg: #f4f4f9;
+            --bg-card: #ffffff;
+            --text: #222;
+            --heading: #2b2b70;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --table-head-bg: #007bff;
+            --table-head-text: #fff;
+            --error: #d9534f;
+        }
+
+        body.dark-mode {
+            /* Dark theme */
+            --bg: linear-gradient(135deg, #2b0030, #0a001a);
+            --bg-card: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --heading: #ff66cc;
+            --accent: #00ffff;
+            --accent-hover: #ff0080;
+            --table-head-bg: linear-gradient(45deg, #ff00ff, #00ffff);
+            --table-head-text: #000;
+            --error: #ff6666;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            transition: all 0.4s ease;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--heading);
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .login-container input {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .login-container button {
+            width: 95%;
+            padding: 12px;
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-container button:hover {
+            background: var(--accent-hover);
+        }
+
+        .error-message {
+            color: var(--error);
+            margin-top: 10px;
+        }
+
+        .table-container {
+            display: none;
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+            transition: all 0.4s ease;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #participantCount {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--heading);
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(30px);
+        }
+
+        table.dataTable {
+            width: 100% !important;
+            border-collapse: collapse;
+            color: var(--text);
+        }
+
+        table.dataTable th,
+        table.dataTable td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        table.dataTable thead {
+            background: var(--table-head-bg);
+            color: var(--table-head-text);
+        }
+
+        .dt-buttons button {
+            margin: 5px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .dt-buttons button:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+
+    <!-- jQuery + DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+
+<body class="dark-mode">
+    <!-- 🔑 Login Page -->
+    <div class="login-container" id="loginBox">
+        <h2>Volunteer Login</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button id="loginBtn">Login</button>
+        <p class="error-message" id="errorMsg"></p>
+    </div>
+
+    <!-- 📋 Monitor Page -->
+    <h1 id="monitorTitle" style="display:none;">📋 Registration Monitor</h1>
+    <div class="stats-bar" id="statsBar" style="display:none;">
+        <div>Total Participants: <span id="participantCount">0</span></div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="modeToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="table-container" id="tableContainer">
+        <table id="registrationTable" class="display nowrap" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>DOB</th>
+                    <th>Gender</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>First Program</th>
+                    <th>Hosteler</th>
+                    <th>Christian</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+        // ✅ Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
+            authDomain: "arise-2d007.firebaseapp.com",
+            projectId: "arise-2d007",
+            storageBucket: "arise-2d007.appspot.com",
+            messagingSenderId: "243777013461",
+            appId: "1:243777013461:web:d16ce794588d79662f045c"
+        };
+
+        // ✅ Init Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ✅ Convert Timestamp safely
+        function formatTimestamp(ts) {
+            if (!ts) return "";
+            if (ts.toDate) {
+                return ts.toDate().toLocaleString();
+            } else {
+                return new Date(ts).toLocaleString();
+            }
+        }
+
+        // ✅ Load Registrations
+        async function loadRegistrations() {
+            const q = query(collection(db, "registrations"), orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
+
+            let tableData = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                tableData.push([
+                    data.name || "",
+                    data.department || "",
+                    data.dob || "",
+                    data.gender || "",
+                    data.phone || "",
+                    data.email || "",
+                    data.address || "",
+                    data.firstProgram || "",
+                    data.hosteler || "",
+                    data.christian || "",
+                    formatTimestamp(data.timestamp)
+                ]);
+            });
+
+            // ✅ Update participants count
+            document.getElementById("participantCount").textContent = querySnapshot.size;
+
+            $('#registrationTable').DataTable({
+                data: tableData,
+                columns: [
+                    { title: "Name" },
+                    { title: "Department" },
+                    { title: "DOB" },
+                    { title: "Gender" },
+                    { title: "Phone" },
+                    { title: "Email" },
+                    { title: "Address" },
+                    { title: "First Program" },
+                    { title: "Hosteler" },
+                    { title: "Christian" },
+                    { title: "Timestamp" }
+                ],
+                dom: 'Bfrtip',
+                buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5', 'print'],
+                responsive: true,
+                scrollX: true,
+                order: [[10, "desc"]],
+                destroy: true
+            });
+        }
+
+        // ✅ Volunteer Login
+        const loginBtn = document.getElementById("loginBtn");
+        loginBtn.addEventListener("click", () => {
+            const user = document.getElementById("username").value.trim();
+            const pass = document.getElementById("password").value.trim();
+            const errorMsg = document.getElementById("errorMsg");
+
+            if (user === "volunteer" && pass === "Lockarise@21") {
+                document.getElementById("loginBox").style.display = "none";
+                document.getElementById("monitorTitle").style.display = "block";
+                document.getElementById("statsBar").style.display = "flex";
+                document.getElementById("tableContainer").style.display = "block";
+                loadRegistrations();
+            } else {
+                errorMsg.textContent = "❌ Invalid credentials!";
+            }
+        });
+
+        // ✅ Dark/Light Mode Toggle
+        const toggle = document.getElementById("modeToggle");
+        toggle.addEventListener("change", () => {
+            document.body.classList.toggle("dark-mode", !toggle.checked);
+        });
+    </script>
+
+</body>
+
+</html>

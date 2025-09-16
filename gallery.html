@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="templatemo-neural-style.css" rel="stylesheet">
+    <style>
+        /* Gallery Page Styling */
+        .gallery-container {
+            padding: 120px 20px 80px;
+            max-width: 1200px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .gallery-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+
+            /* Fallback solid color */
+            color: #ff00ff;
+
+            /* Gradient text for WebKit browsers */
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            /* Firefox support */
+            background-clip: text;
+        }
+
+
+        .gallery-header p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 40px;
+        }
+
+        /* Filter buttons */
+        .filter-btns {
+            margin-bottom: 40px;
+        }
+
+        .filter-btns button {
+            margin: 6px;
+            padding: 10px 22px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #00ffff, #8000ff);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .filter-btns button:hover,
+        .filter-btns button.active {
+            background: linear-gradient(45deg, #ff0080, #8000ff);
+            box-shadow: 0 0 15px #ff008080;
+        }
+
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-actions {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .gallery-actions button {
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .gallery-actions button:hover {
+            background: linear-gradient(45deg, #ff0080, #00ffff);
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 20, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 2000;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 15px;
+            box-shadow: 0 0 30px #8000ff88;
+            margin-bottom: 25px;
+        }
+
+        .lightbox .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 32px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .comments {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .comments h4 {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .comment-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .comment-list p {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+
+        .comment-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .comment-box input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+        }
+
+        .comment-box button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #00ffff, #ff0080);
+            color: white;
+            cursor: pointer;
+        }
+
+        .gallery-item.hide {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Epic Neural Background -->
+    <div class="neural-background"></div>
+    <div class="geometric-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+    <div class="neural-lines">
+        <div class="neural-line"></div>
+        <div class="neural-line"></div>
+        <div class="neural-line"></div>
+    </div>
+
+    <!-- Header (same as index.html) -->
+    <header class="glass">
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="images/Black.png" alt="Logo" style="height:40px; width:auto;" />
+                JY VJEC
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html#features">About</a></li>
+                <li><a href="index.html#contact">Register</a></li>
+                <li><a href="index.html#timeline">Intercession</a></li>
+                <li><a href="index.html#showcase">Contact</a></li>
+                <li><a href="gallery.html" class="active">Gallery</a></li>
+            </ul>
+            <div class="mobile-menu-toggle">
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+            </div>
+        </nav>
+        <div class="mobile-nav">
+            <a href="index.html#features">About</a>
+            <a href="index.html#contact">Register</a>
+            <a href="index.html#timeline">Intercession</a>
+            <a href="index.html#showcase">Contact</a>
+            <a href="gallery.html">Gallery</a>
+        </div>
+    </header>
+
+    <!-- Gallery Section -->
+    <section class="gallery-container">
+        <div class="gallery-header">
+            <h1>Event Gallery</h1>
+
+        </div>
+
+        <div class="filter-btns">
+            <button class="active" data-filter="all">All</button>
+            <button data-filter="stage">Stage</button>
+            <button data-filter="crowd">Crowd</button>
+            <button data-filter="fun">Fun</button>
+        </div>
+
+        <div class="gallery-grid">
+            <!-- Demo items -->
+            <div class="gallery-item" data-category="stage">
+                <img src="./images/templatemo-neural-01.jpg" alt="Stage">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="crowd">
+                <img src="./images/templatemo-neural-04.jpg" alt="Crowd">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="fun">
+                <img src="./images/templatemo-neural-03.jpg" alt="Fun">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="stage">
+                <img src="./images/10.jpg" alt="Stage">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="stage">
+                <img src="./images/11.jpg" alt="Stage">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="stage">
+                <img src="./images/15.jpg" alt="Stage">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+            <div class="gallery-item" data-category="stage">
+                <img src="./images/16.jpg" alt="Stage">
+                <div class="gallery-actions">
+                    <button class="like">❤️</button>
+                    <button class="share">🔗</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="close">&times;</span>
+        <img src="" alt="Preview" id="lightbox-img">
+        <div class="comments">
+            <h4>Comments</h4>
+            <div class="comment-list" id="comment-list"></div>
+            <div class="comment-box">
+                <input type="text" id="comment-input" placeholder="Add a comment...">
+                <button id="comment-submit">Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html#features">About</a>
+                <a href="index.html#contact">Registration</a>
+                <a href="index.html#timeline">Intercession</a>
+            </div>
+            <div class="footer-copyright">
+                <p>&copy; 2025 Core Team. All rights reserved to JY VJEC.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="templatemo-neural-scripts.js"></script>
+    <script>
+        // Filter
+        const filterBtns = document.querySelectorAll('.filter-btns button');
+        const items = document.querySelectorAll('.gallery-item');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.filter;
+                items.forEach(item => {
+                    if (filter === 'all' || item.dataset.category === filter) {
+                        item.classList.remove('hide');
+                    } else {
+                        item.classList.add('hide');
+                    }
+                });
+            });
+        });
+
+        // Lightbox
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const closeBtn = document.querySelector('.lightbox .close');
+        items.forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (e.target.classList.contains('like') || e.target.classList.contains('share')) return;
+                lightbox.style.display = 'flex';
+                lightboxImg.src = item.querySelector('img').src;
+                document.getElementById('comment-list').innerHTML = '';
+            });
+        });
+        closeBtn.addEventListener('click', () => {
+            lightbox.style.display = 'none';
+        });
+
+        // Likes
+        document.querySelectorAll('.like').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                btn.textContent = btn.classList.contains('active') ? '💖' : '❤️';
+            });
+        });
+
+        // Share
+        document.querySelectorAll('.share').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const imgSrc = btn.closest('.gallery-item').querySelector('img').src;
+                navigator.clipboard.writeText(imgSrc);
+                alert('Image link copied to clipboard!');
+            });
+        });
+
+        // Comments
+        document.getElementById('comment-submit').addEventListener('click', () => {
+            const input = document.getElementById('comment-input');
+            const comment = input.value.trim();
+            if (comment !== '') {
+                const p = document.createElement('p');
+                p.textContent = comment;
+                document.getElementById('comment-list').appendChild(p);
+                input.value = '';
+            }
+        });
+    </script>
+</body>
+
+</html>
