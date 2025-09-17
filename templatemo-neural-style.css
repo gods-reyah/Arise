@@ -1541,3 +1541,58 @@ footer {
     background: linear-gradient(45deg, #ff0080, #8000ff);
     box-shadow: 0 0 15px rgba(255, 0, 128, 0.7);
 }
+
+/* Navbar responsive fix */
+@media (max-width: 768px) {
+    header {
+        padding: 8px 15px;
+        /* less padding on small screens */
+    }
+
+    .navbar-brand {
+        font-size: 16px;
+        /* shrink logo text */
+    }
+
+    .navbar-nav li a {
+        font-size: 14px;
+        padding: 8px 10px;
+    }
+
+    .navbar {
+        width: 100%;
+        /* force navbar to shrink properly */
+        max-width: 100%;
+    }
+}
+
+/* Hero section "ARISE" text fix */
+@media (max-width: 768px) {
+
+    .hero h2,
+    .main-banner .caption h2 {
+        font-size: 28px;
+        /* bigger heading for mobile */
+        line-height: 1.3em;
+    }
+
+    .hero p,
+    .main-banner .caption p {
+        font-size: 16px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+
+    .hero h2,
+    .main-banner .caption h2 {
+        font-size: 24px;
+        /* slightly smaller but still bold */
+    }
+
+    .navbar-nav li a {
+        font-size: 13px;
+        padding: 6px 8px;
+    }
+}
