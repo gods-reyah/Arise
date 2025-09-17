@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Monitor</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #e0e5ec;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #e0a3ff, #ff69b4, #9370db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .toolbar button,
+        .toolbar select,
+        .toolbar input {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 12px;
+            background: #e0e5ec;
+            box-shadow: -4px -4px 8px #ffffff, 4px 4px 8px #a3b1c6;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .toolbar button:hover,
+        .toolbar select:hover,
+        .toolbar input:focus {
+            box-shadow: inset -4px -4px 8px #ffffff, inset 4px 4px 8px #a3b1c6;
+        }
+
+        .toolbar button.active {
+            background: linear-gradient(145deg, #a8edea, #fed6e3);
+            box-shadow: inset -4px -4px 8px #ffffff, inset 4px 4px 8px #a3b1c6;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .table-container {
+            width: 100%;
+            max-width: 1000px;
+            overflow-x: auto;
+            border-radius: 20px;
+            background: #e0e5ec;
+            box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px #a3b1c6;
+            padding: 20px;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #ccc;
+        }
+
+        th {
+            background: #f0f3f8;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f9f9ff;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #555;
+        }
+
+        /* Login Overlay */
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: #e0e5ec;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .login-box {
+            width: 320px;
+            background: #e0e5ec;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px #a3b1c6;
+        }
+
+        .login-box h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            background: #e0e5ec;
+            box-shadow: inset -4px -4px 8px #ffffff, inset 4px 4px 8px #a3b1c6;
+            outline: none;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #a8edea, #fed6e3);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        /* Loader */
+        #loader {
+            display: none;
+            margin: 20px;
+        }
+
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #9370db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Volunteer Monitor</h1>
+
+    <!-- Login Screen -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>Coordinator Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <div class="error" id="loginError"></div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar" style="display:none;" id="toolbar">
+        <input type="text" id="searchInput" placeholder="Search volunteers...">
+        <select id="yearFilter">
+            <option value="">All Years</option>
+            <option value="second">Second</option>
+            <option value="third">Third</option>
+            <option value="final">Final</option>
+        </select>
+        <button data-ministry="" class="active">All</button>
+        <button data-ministry="intercession">Intercession</button>
+        <button data-ministry="general">General</button>
+        <button data-ministry="mobilisation">Mobilisation</button>
+        <button data-ministry="companions">Companions</button>
+        <button data-ministry="music">Music</button>
+        <button data-ministry="theatre">Theatre</button>
+        <button data-ministry="decoration">Decoration</button>
+        <button data-ministry="finance">Finance</button>
+        <button data-ministry="games">Games</button>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="text-align:center;">Loading data, please wait...</p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container" id="tableContainer">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Year</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Ministry</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="6" class="no-data">Loading volunteers...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
+            authDomain: "arise-2d007.firebaseapp.com",
+            projectId: "arise-2d007",
+            storageBucket: "arise-2d007.firebasestorage.app",
+            messagingSenderId: "243777013461",
+            appId: "1:243777013461:web:d16ce794588d79662f045c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const tableBody = document.getElementById("tableBody");
+        const buttons = document.querySelectorAll(".toolbar button[data-ministry]");
+        let allVolunteers = [];
+        let currentMinistry = "";
+
+        // Load volunteers from Firestore
+        async function loadVolunteers() {
+            document.getElementById("loader").style.display = "block";
+            document.getElementById("tableContainer").style.display = "none";
+
+            const querySnapshot = await getDocs(collection(db, "volunteers"));
+            allVolunteers = querySnapshot.docs.map(doc => doc.data());
+
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("tableContainer").style.display = "block";
+            renderTable();
+        }
+
+        // Render table
+        function renderTable() {
+            const search = document.getElementById("searchInput").value.toLowerCase();
+            const year = document.getElementById("yearFilter").value;
+
+            const filtered = allVolunteers.filter(v => {
+                const matchesSearch =
+                    v.name?.toLowerCase().includes(search) ||
+                    v.department?.toLowerCase().includes(search) ||
+                    v.email?.toLowerCase().includes(search);
+
+                const matchesYear = year ? v.year?.toLowerCase() === year.toLowerCase() : true;
+                const matchesMinistry = currentMinistry ? v.ministry?.toLowerCase() === currentMinistry.toLowerCase() : true;
+
+                return matchesSearch && matchesYear && matchesMinistry;
+            });
+
+            tableBody.innerHTML = "";
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="no-data">No volunteers found</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(v => {
+                const row = `
+          <tr>
+            <td>${v.name || ""}</td>
+            <td>${v.department || ""}</td>
+            <td>${v.year || ""}</td>
+            <td>${v.phone || ""}</td>
+            <td>${v.email || ""}</td>
+            <td>${v.ministry || ""}</td>
+          </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // Filters
+        document.getElementById("searchInput").addEventListener("input", renderTable);
+        document.getElementById("yearFilter").addEventListener("change", renderTable);
+
+        buttons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                buttons.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentMinistry = btn.getAttribute("data-ministry");
+                renderTable();
+            });
+        });
+
+        // Login system
+        window.login = function () {
+            const user = document.getElementById("username").value.trim();
+            const pass = document.getElementById("password").value.trim();
+            const errorDiv = document.getElementById("loginError");
+
+            if (user === "Coordinator" && pass === "Lockaccess@21") {
+                document.getElementById("loginOverlay").style.display = "none";
+                document.getElementById("toolbar").style.display = "flex";
+                loadVolunteers();
+            } else {
+                errorDiv.textContent = "Invalid username or password!";
+            }
+        }
+    </script>
+</body>
+
+</html>
