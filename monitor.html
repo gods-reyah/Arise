@@ -3,35 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Registration Monitor</title>
-    <link rel="icon" type="image/png" href="./images/Black.png">
+    <title>Participants Monitor</title>
+    <link rel="icon" type="image/png" href="./images/White.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
         :root {
-            /* Light theme */
-            --bg: #f4f4f9;
-            --bg-card: #ffffff;
-            --text: #222;
-            --heading: #2b2b70;
-            --accent: #007bff;
-            --accent-hover: #0056b3;
-            --table-head-bg: #007bff;
-            --table-head-text: #fff;
-            --error: #d9534f;
-        }
-
-        body.dark-mode {
-            /* Dark theme */
-            --bg: linear-gradient(135deg, #2b0030, #0a001a);
-            --bg-card: rgba(255, 255, 255, 0.1);
-            --text: #ffffff;
-            --heading: #ff66cc;
-            --accent: #00ffff;
-            --accent-hover: #ff0080;
-            --table-head-bg: linear-gradient(45deg, #ff00ff, #00ffff);
-            --table-head-text: #000;
-            --error: #ff6666;
+            --bg: #e0e5ec;
+            --card: #e0e5ec;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
+            --text: #333;
+            --accent: #6c63ff;
+            --accent-hover: #4c46d5;
         }
 
         body {
@@ -40,24 +24,24 @@
             color: var(--text);
             margin: 0;
             padding: 20px;
-            transition: all 0.4s ease;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 10px;
-            color: var(--heading);
+            margin-bottom: 15px;
+            color: var(--accent);
         }
 
+        /* Login */
         .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+            max-width: 380px;
+            margin: 80px auto;
+            background: var(--card);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 8px 8px 16px var(--shadow-dark),
+                -8px -8px 16px var(--shadow-light);
             text-align: center;
-            transition: all 0.4s ease;
         }
 
         .login-container h2 {
@@ -69,22 +53,29 @@
             width: 90%;
             padding: 12px;
             margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 12px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            background: var(--card);
+            box-shadow: inset 5px 5px 10px var(--shadow-dark),
+                inset -5px -5px 10px var(--shadow-light);
         }
 
         .login-container button {
             width: 95%;
             padding: 12px;
-            background: var(--accent);
             border: none;
-            color: white;
+            border-radius: 12px;
             font-weight: bold;
-            border-radius: 8px;
+            font-size: 16px;
+            color: #fff;
+            background: var(--accent);
             cursor: pointer;
-            transition: background 0.3s;
             margin-top: 10px;
+            transition: 0.3s;
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                -4px -4px 8px var(--shadow-light);
         }
 
         .login-container button:hover {
@@ -92,146 +83,285 @@
         }
 
         .error-message {
-            color: var(--error);
+            color: red;
             margin-top: 10px;
         }
 
-        .table-container {
-            display: none;
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
-            transition: all 0.4s ease;
-        }
-
-        /* Stats bar */
-        .stats-bar {
+        /* Toolbar */
+        .toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        #participantCount {
-            font-size: 20px;
+        .box {
+            background: var(--card);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                -6px -6px 12px var(--shadow-light);
             font-weight: bold;
-            color: var(--heading);
+            color: var(--accent);
+            text-align: center;
+            min-width: 120px;
         }
 
-        /* Toggle switch */
-        .toggle-switch {
-            position: relative;
-            width: 60px;
-            height: 30px;
-        }
-
-        .toggle-switch input {
-            display: none;
-        }
-
-        .slider {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--card);
             border-radius: 30px;
+            padding: 8px 15px;
+            box-shadow: inset 6px 6px 12px var(--shadow-dark),
+                inset -6px -6px 12px var(--shadow-light);
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box select,
+        .search-box input {
+            border: none;
+            outline: none;
+            font-size: 15px;
+            padding: 6px 10px;
+            background: transparent;
+            margin: 0 5px;
+            flex: 1;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background: var(--accent);
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 25px;
             cursor: pointer;
-            transition: 0.4s;
+            font-weight: bold;
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                -4px -4px 8px var(--shadow-light);
         }
 
-        .slider:before {
-            content: "";
+        .dropbtn:hover {
+            background: var(--accent-hover);
+        }
+
+        .dropdown-content {
+            display: none;
             position: absolute;
-            height: 22px;
-            width: 22px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            border-radius: 50%;
-            transition: 0.4s;
+            background: var(--card);
+            min-width: 140px;
+            border-radius: 12px;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                -6px -6px 12px var(--shadow-light);
+            z-index: 1;
+            overflow: hidden;
         }
 
-        input:checked+.slider {
-            background-color: var(--accent);
+        .dropdown-content a {
+            padding: 10px 15px;
+            display: block;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
         }
 
-        input:checked+.slider:before {
-            transform: translateX(30px);
+        .dropdown-content a:hover {
+            background: var(--accent);
+            color: white;
         }
 
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* ---------- TABLE: auto-size, no-wrap, horizontal scroll ---------- */
+        /* allow horizontal scroll if table is wider than viewport */
+        .table-container {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            margin-bottom: 30px;
+            overflow-x: auto;
+            /* important: allow horizontal scroll */
+        }
+
+        /* let columns size according to their content (auto) */
         table.dataTable {
             width: 100% !important;
-            border-collapse: collapse;
-            color: var(--text);
+            border-collapse: collapse !important;
+            table-layout: auto !important;
+            /* allow auto sizing */
         }
 
-        table.dataTable th,
-        table.dataTable td {
-            padding: 12px;
+        /* header and body cells: single-line, no wrapping */
+        table.dataTable thead th,
+        table.dataTable tbody td {
+            white-space: nowrap;
+            /* keep content on one line */
+            padding: 10px 12px;
+            vertical-align: middle;
+            text-overflow: ellipsis;
+            overflow: hidden;
             text-align: left;
+            /* make text alignment like Excel (left for content) */
         }
 
-        table.dataTable thead {
-            background: var(--table-head-bg);
-            color: var(--table-head-text);
-        }
-
-        .dt-buttons button {
-            margin: 5px;
+        /* header look */
+        table.dataTable thead th {
             background: var(--accent);
-            border: none;
             color: #fff;
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 8px 15px;
-            cursor: pointer;
-            transition: background 0.3s;
+            font-weight: 700;
         }
 
-        .dt-buttons button:hover {
-            background: var(--accent-hover);
+        /* widen columns that typically have long content (email/address) */
+        table.dataTable thead th:nth-child(7),
+        table.dataTable tbody td:nth-child(7) {
+            min-width: 260px;
+        }
+
+        /* Email */
+        table.dataTable thead th:nth-child(8),
+        table.dataTable tbody td:nth-child(8) {
+            min-width: 280px;
+        }
+
+        /* Address */
+
+        /* make small columns compact (phone/gender/DOB) */
+        table.dataTable thead th:nth-child(4),
+        table.dataTable tbody td:nth-child(4) {
+            min-width: 100px;
+        }
+
+        /* DOB */
+        table.dataTable thead th:nth-child(5),
+        table.dataTable tbody td:nth-child(5) {
+            min-width: 80px;
+        }
+
+        /* Gender */
+        table.dataTable thead th:nth-child(6),
+        table.dataTable tbody td:nth-child(6) {
+            min-width: 120px;
+        }
+
+        /* Phone */
+
+
+        /* Quick stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 15px;
+            background: var(--card);
+            text-align: center;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                -6px -6px 12px var(--shadow-light);
+        }
+
+        .stat-card h3 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .stat-card p {
+            margin: 5px 0 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            margin: 40px auto;
+            border: 6px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 6px solid var(--accent);
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 
     <!-- jQuery + DataTables -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 </head>
 
-<body class="dark-mode">
-    <!-- 🔑 Login Page -->
+<body>
+    <!-- 🔑 Login -->
     <div class="login-container" id="loginBox">
-        <h2>Volunteer Login</h2>
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <h2>Coordinator Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
         <button id="loginBtn">Login</button>
         <p class="error-message" id="errorMsg"></p>
     </div>
 
-    <!-- 📋 Monitor Page -->
-    <h1 id="monitorTitle" style="display:none;">📋 Registration Monitor</h1>
-    <div class="stats-bar" id="statsBar" style="display:none;">
-        <div>Total Participants: <span id="participantCount">0</span></div>
-        <label class="toggle-switch">
-            <input type="checkbox" id="modeToggle">
-            <span class="slider"></span>
-        </label>
+    <!-- 📋 Monitor -->
+    <h1 id="monitorTitle" style="display:none;">📋 Participants Monitor</h1>
+
+    <div class="toolbar" id="toolbar" style="display:none;">
+        <div class="box">Total: <span id="participantCount">0</span></div>
+
+        <div class="search-box">
+            <select id="searchField">
+                <option value="1">Name</option>
+                <option value="2">Department</option>
+                <option value="5">Phone</option>
+                <option value="6">Email</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Search... (choose field)">
+        </div>
+
+        <div class="dropdown">
+            <button class="dropbtn">Export ▼</button>
+            <div class="dropdown-content">
+                <a href="#" onclick="exportTable('copy')">Copy</a>
+                <a href="#" onclick="exportTable('excel')">Excel</a>
+                <a href="#" onclick="exportTable('csv')">CSV</a>
+                <a href="#" onclick="exportTable('pdf')">PDF</a>
+                <a href="#" onclick="exportTable('print')">Print</a>
+            </div>
+        </div>
     </div>
-    <div class="table-container" id="tableContainer">
+
+    <div class="loader" id="loader"></div>
+
+    <div class="table-container" id="tableContainer" style="display:none;">
         <table id="registrationTable" class="display nowrap" style="width:100%">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Department</th>
                     <th>DOB</th>
@@ -249,12 +379,14 @@
         </table>
     </div>
 
+    <!-- Quick Stats -->
+    <div class="quick-stats" id="quickStats" style="display:none;"></div>
+
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
         import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-        // ✅ Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
             authDomain: "arise-2d007.firebaseapp.com",
@@ -264,97 +396,107 @@
             appId: "1:243777013461:web:d16ce794588d79662f045c"
         };
 
-        // ✅ Init Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ✅ Convert Timestamp safely
+        let dataTable;
+
         function formatTimestamp(ts) {
             if (!ts) return "";
-            if (ts.toDate) {
-                return ts.toDate().toLocaleString();
-            } else {
-                return new Date(ts).toLocaleString();
-            }
+            if (ts.toDate) return ts.toDate().toLocaleString();
+            return new Date(ts).toLocaleString();
         }
 
-        // ✅ Load Registrations
         async function loadRegistrations() {
+            document.getElementById("loader").style.display = "block";
+
             const q = query(collection(db, "registrations"), orderBy("timestamp", "desc"));
             const querySnapshot = await getDocs(q);
 
             let tableData = [];
+            let stats = { male: 0, female: 0, hosteler: 0, day: 0, christian: 0, nonChristian: 0 };
+
+            let index = 1;
             querySnapshot.forEach((doc) => {
-                const data = doc.data();
+                const d = doc.data();
                 tableData.push([
-                    data.name || "",
-                    data.department || "",
-                    data.dob || "",
-                    data.gender || "",
-                    data.phone || "",
-                    data.email || "",
-                    data.address || "",
-                    data.firstProgram || "",
-                    data.hosteler || "",
-                    data.christian || "",
-                    formatTimestamp(data.timestamp)
+                    index++,
+                    d.name || "",
+                    d.department || "",
+                    d.dob || "",
+                    d.gender || "",
+                    d.phone || "",
+                    d.email || "",
+                    d.address || "",
+                    d.firstProgram || "",
+                    d.hosteler || "",
+                    d.christian || "",
+                    formatTimestamp(d.timestamp)
                 ]);
+
+                if (d.gender?.toLowerCase() === "male") stats.male++;
+                if (d.gender?.toLowerCase() === "female") stats.female++;
+                if (d.hosteler?.toLowerCase() === "yes") stats.hosteler++;
+                else stats.day++;
+                if (d.christian?.toLowerCase() === "yes") stats.christian++;
+                else stats.nonChristian++;
             });
 
-            // ✅ Update participants count
             document.getElementById("participantCount").textContent = querySnapshot.size;
 
-            $('#registrationTable').DataTable({
+            if (dataTable) dataTable.destroy();
+
+            dataTable = $('#registrationTable').DataTable({
                 data: tableData,
-                columns: [
-                    { title: "Name" },
-                    { title: "Department" },
-                    { title: "DOB" },
-                    { title: "Gender" },
-                    { title: "Phone" },
-                    { title: "Email" },
-                    { title: "Address" },
-                    { title: "First Program" },
-                    { title: "Hosteler" },
-                    { title: "Christian" },
-                    { title: "Timestamp" }
-                ],
-                dom: 'Bfrtip',
-                buttons: ['copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5', 'print'],
                 responsive: true,
                 scrollX: true,
-                order: [[10, "desc"]],
-                destroy: true
+                destroy: true,
+                dom: 'lrtip', // keeps buttons
+                buttons: ['copy', 'excel', 'csv', 'pdf', 'print'],
+                searching: false // disables the top-right search box
             });
+
+
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("tableContainer").style.display = "block";
+
+            // update stats
+            const statsBox = document.getElementById("quickStats");
+            statsBox.innerHTML = `
+        <div class="stat-card"><h3>Male</h3><p>${stats.male}</p></div>
+        <div class="stat-card"><h3>Female</h3><p>${stats.female}</p></div>
+        <div class="stat-card"><h3>Hostelers</h3><p>${stats.hosteler}</p></div>
+        <div class="stat-card"><h3>Day Scholars</h3><p>${stats.day}</p></div>
+        <div class="stat-card"><h3>Christian</h3><p>${stats.christian}</p></div>
+        <div class="stat-card"><h3>Non-Christian</h3><p>${stats.nonChristian}</p></div>`;
+            statsBox.style.display = "grid";
         }
 
-        // ✅ Volunteer Login
-        const loginBtn = document.getElementById("loginBtn");
-        loginBtn.addEventListener("click", () => {
+        // export function
+        function exportTable(type) {
+            if (!dataTable) return;
+            if (type === "copy") dataTable.button('.buttons-copy').trigger();
+            if (type === "excel") dataTable.button('.buttons-excel').trigger();
+            if (type === "csv") dataTable.button('.buttons-csv').trigger();
+            if (type === "pdf") dataTable.button('.buttons-pdf').trigger();
+            if (type === "print") dataTable.button('.buttons-print').trigger();
+        }
+        window.exportTable = exportTable;
+
+        // login
+        document.getElementById("loginBtn").addEventListener("click", () => {
             const user = document.getElementById("username").value.trim();
             const pass = document.getElementById("password").value.trim();
-            const errorMsg = document.getElementById("errorMsg");
-
             if (user === "Volunteer" && pass === "Lockarise@21") {
                 document.getElementById("loginBox").style.display = "none";
                 document.getElementById("monitorTitle").style.display = "block";
-                document.getElementById("statsBar").style.display = "flex";
-                document.getElementById("tableContainer").style.display = "block";
+                document.getElementById("toolbar").style.display = "flex";
                 loadRegistrations();
             } else {
-                errorMsg.textContent = "❌ Invalid credentials!";
+                document.getElementById("errorMsg").textContent = "❌ Invalid credentials!";
             }
         });
-
-        // ✅ Dark/Light Mode Toggle
-        const toggle = document.getElementById("modeToggle");
-        toggle.addEventListener("change", () => {
-            document.body.classList.toggle("dark-mode", !toggle.checked);
-        });
     </script>
-
 </body>
 
-
 </html>
-
