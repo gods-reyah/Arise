@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Registration</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #e0e5ec;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 360px;
+            background: #e0e5ec;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: -8px -8px 16px #ffffff, 8px 8px 16px #a3b1c6;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 60px;
+            background: linear-gradient(135deg, #e0a3ff 0%, #ff69b4 30%, #9370db 60%, #e0a3ff 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.09em;
+            text-shadow: none;
+            opacity: 1;
+            animation: modernGradient 8s ease infinite;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .input-field {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-field input,
+        .input-field select {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            border-radius: 12px;
+            background: #e0e5ec;
+            box-shadow: inset -4px -4px 8px #ffffff, inset 4px 4px 8px #a3b1c6;
+            color: #555;
+        }
+
+        .input-field select {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(145deg, #a8edea, #fed6e3);
+            box-shadow: -4px -4px 8px #ffffff, 4px 4px 8px #a3b1c6;
+            color: #333;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn span {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Loader overlay inside button */
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 3px solid #ccc;
+            border-top: 3px solid #555;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+            z-index: 1;
+        }
+
+        .success,
+        .error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            display: none;
+            z-index: 1;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes modernGradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a class="logo">
+            <img src="images/Black.png" alt="Logo" style="height:50px; width:auto;" /><br>
+            JY VJEC
+        </a>
+        <h1>ARISE</h1>
+        <h2>Volunteer Registration</h2>
+        <form id="volunteerForm">
+            <div class="input-field">
+                <input type="text" id="name" placeholder="Full Name" required>
+            </div>
+            <div class="input-field">
+                <input type="text" id="department" placeholder="Department" required>
+            </div>
+            <div class="input-field">
+                <input type="tel" id="phone" placeholder="Phone Number" required>
+            </div>
+            <div class="input-field">
+                <input type="email" id="email" placeholder="Email" required>
+            </div>
+            <div class="input-field">
+                <select id="year" required>
+                    <option value="" disabled selected>Select Year</option>
+                    <option value="Second">Second</option>
+                    <option value="Third">Third</option>
+                    <option value="Final">Final</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <select id="ministry" required>
+                    <option value="" disabled selected>Select Ministry</option>
+                    <option>Intercession</option>
+                    <option>General</option>
+                    <option>Mobilisation</option>
+                    <option>Companions</option>
+                    <option>Music</option>
+                    <option>Theatre</option>
+                    <option>Decoration</option>
+                    <option>Finance</option>
+                    <option>Games</option>
+                </select>
+            </div>
+            <button type="submit" class="submit-btn">
+                <span>Register</span>
+                <div class="loader"></div>
+                <div class="success">✔</div>
+                <div class="error">✖</div>
+            </button>
+        </form>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
+            authDomain: "arise-2d007.firebaseapp.com",
+            projectId: "arise-2d007",
+            storageBucket: "arise-2d007.firebasestorage.app",
+            messagingSenderId: "243777013461",
+            appId: "1:243777013461:web:d16ce794588d79662f045c"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Form handling
+        const form = document.getElementById("volunteerForm");
+        const btn = form.querySelector(".submit-btn");
+        const loader = btn.querySelector(".loader");
+        const success = btn.querySelector(".success");
+        const error = btn.querySelector(".error");
+        const text = btn.querySelector("span");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // Show loader
+            loader.style.display = "block";
+            text.style.visibility = "hidden";
+            success.style.display = "none";
+            error.style.display = "none";
+
+            const name = document.getElementById("name").value;
+            const department = document.getElementById("department").value;
+            const phone = document.getElementById("phone").value;
+            const email = document.getElementById("email").value;
+            const year = document.getElementById("year").value;
+            const ministry = document.getElementById("ministry").value;
+
+            try {
+                await addDoc(collection(db, "volunteers"), {
+                    name,
+                    department,
+                    phone,
+                    email,
+                    year,
+                    ministry,
+                    timestamp: new Date()
+                });
+
+                loader.style.display = "none";
+                success.style.display = "block";
+
+                // Reset form after success
+                form.reset();
+                setTimeout(() => {
+                    success.style.display = "none";
+                    text.style.visibility = "visible";
+                }, 2000);
+
+            } catch (err) {
+                console.error("Error saving volunteer:", err);
+                loader.style.display = "none";
+                error.style.display = "block";
+                setTimeout(() => {
+                    error.style.display = "none";
+                    text.style.visibility = "visible";
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+
+</html>
