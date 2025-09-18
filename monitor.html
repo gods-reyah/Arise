@@ -472,8 +472,8 @@
                     docSnap.id // hidden docId
                 ]);
 
-                if (d.gender?.toLowerCase() === "male") stats.male++;
-                if (d.gender?.toLowerCase() === "female") stats.female++;
+                if (d.gender?.toLowerCase() === "m") stats.male++;
+                if (d.gender?.toLowerCase() === "f") stats.female++;
                 if (d.hosteler?.toLowerCase() === "yes") stats.hosteler++;
                 else stats.day++;
                 if (d.christian?.toLowerCase() === "yes") stats.christian++;
@@ -649,3 +649,4 @@
 </body>
 
 </html>
+
