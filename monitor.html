@@ -385,7 +385,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
@@ -400,11 +400,46 @@
         const db = getFirestore(app);
 
         let dataTable;
+        let liveSearchInitialized = false; // prevent duplicate ext.search installs
 
         function formatTimestamp(ts) {
             if (!ts) return "";
             if (ts.toDate) return ts.toDate().toLocaleString();
             return new Date(ts).toLocaleString();
+        }
+
+        // --- Live search (installed once) ---
+        function setupLiveSearch() {
+            const searchField = document.getElementById("searchField");
+            const searchInput = document.getElementById("searchInput");
+            const tableId = "registrationTable";
+
+            if (!searchField || !searchInput) {
+                console.warn("Live search: missing #searchField or #searchInput in DOM.");
+                return;
+            }
+
+            if (!liveSearchInitialized) {
+                $.fn.dataTable.ext.search.push(function (settings, data) {
+                    if (!settings || !settings.nTable) return true;
+                    const currentTableId = settings.nTable.id || (settings.nTable.getAttribute && settings.nTable.getAttribute('id'));
+                    if (currentTableId !== tableId) return true;
+
+                    const term = (searchInput.value || "").trim().toLowerCase();
+                    if (!term) return true;
+
+                    const colIndex = parseInt(searchField.value, 10);
+                    if (Number.isNaN(colIndex)) return true;
+
+                    const cell = (data[colIndex] || "").toString().toLowerCase();
+                    return cell.indexOf(term) !== -1;
+                });
+
+                searchInput.addEventListener("input", () => { if (dataTable) dataTable.draw(); });
+                searchField.addEventListener("change", () => { if (dataTable) dataTable.draw(); });
+
+                liveSearchInitialized = true;
+            }
         }
 
         async function loadRegistrations() {
@@ -417,8 +452,10 @@
             let stats = { male: 0, female: 0, hosteler: 0, day: 0, christian: 0, nonChristian: 0 };
 
             let index = 1;
-            querySnapshot.forEach((doc) => {
-                const d = doc.data();
+            querySnapshot.forEach((docSnap) => {
+                const d = docSnap.data();
+
+                // push row data and append doc id as last (hidden) column so we always have it
                 tableData.push([
                     index++,
                     d.name || "",
@@ -431,7 +468,8 @@
                     d.firstProgram || "",
                     d.hosteler || "",
                     d.christian || "",
-                    formatTimestamp(d.timestamp)
+                    formatTimestamp(d.timestamp),
+                    docSnap.id // hidden docId
                 ]);
 
                 if (d.gender?.toLowerCase() === "male") stats.male++;
@@ -451,25 +489,131 @@
                 responsive: true,
                 scrollX: true,
                 destroy: true,
-                dom: 'lrtip', // keeps buttons
+                dom: 'lrtip',
                 buttons: ['copy', 'excel', 'csv', 'pdf', 'print'],
-                searching: false // disables the top-right search box
+                searching: true,
+                columnDefs: [
+                    { targets: -1, visible: false, searchable: false }, // hide docId column
+                    { orderable: false, targets: 0 } // disable ordering for serial #
+                ]
             });
-
 
             document.getElementById("loader").style.display = "none";
             document.getElementById("tableContainer").style.display = "block";
 
+            setupLiveSearch();
+            setupEditableCells();
+
             // update stats
             const statsBox = document.getElementById("quickStats");
             statsBox.innerHTML = `
-        <div class="stat-card"><h3>Male</h3><p>${stats.male}</p></div>
-        <div class="stat-card"><h3>Female</h3><p>${stats.female}</p></div>
-        <div class="stat-card"><h3>Hostelers</h3><p>${stats.hosteler}</p></div>
-        <div class="stat-card"><h3>Day Scholars</h3><p>${stats.day}</p></div>
-        <div class="stat-card"><h3>Christian</h3><p>${stats.christian}</p></div>
-        <div class="stat-card"><h3>Non-Christian</h3><p>${stats.nonChristian}</p></div>`;
+                <div class="stat-card"><h3>Male</h3><p>${stats.male}</p></div>
+                <div class="stat-card"><h3>Female</h3><p>${stats.female}</p></div>
+                <div class="stat-card"><h3>Hostelers</h3><p>${stats.hosteler}</p></div>
+                <div class="stat-card"><h3>Day Scholars</h3><p>${stats.day}</p></div>
+                <div class="stat-card"><h3>Christian</h3><p>${stats.christian}</p></div>
+                <div class="stat-card"><h3>Non-Christian</h3><p>${stats.nonChristian}</p></div>`;
             statsBox.style.display = "grid";
+        }
+
+        // ---- Inline-edit handlers with robust logging and error messages ----
+        function setupEditableCells() {
+            // mapping index -> firestore field name (must match your doc keys)
+            const fields = ["", "name", "department", "dob", "gender", "phone", "email", "address", "firstProgram", "hosteler", "christian", "timestamp", "docId"];
+
+            $('#registrationTable tbody').off('dblclick').on('dblclick', 'td', function () {
+                const cell = dataTable.cell(this);
+                const oldValue = cell.data();
+                const idx = cell.index();
+                if (!idx) return; // defensive
+                const rowIdx = idx.row;
+                const colIdx = idx.column;
+                const rowData = dataTable.row(rowIdx).data() || [];
+                const docId = rowData[rowData.length - 1]; // last element should be docId
+                const fieldName = fields[colIdx];
+
+                console.log("dblclick edit:", { rowIdx, colIdx, fieldName, oldValue, docId, rowData });
+
+                // Protect non-editable columns
+                if (colIdx === 0 || fieldName === "timestamp" || fieldName === "docId") {
+                    console.info("Non-editable column, ignoring.");
+                    return;
+                }
+
+                if (!docId) {
+                    console.error("No docId found for row. Update aborted.", { rowData });
+                    alert("Cannot determine document ID for this row. Update aborted. See console for details.");
+                    return;
+                }
+
+                // Create input element
+                const $input = $('<input type="text" class="edit-input" />').val(oldValue);
+                $(this).empty().append($input);
+                $input.focus().select();
+
+                // helper to restore cell
+                const restoreOld = () => {
+                    cell.data(oldValue);
+                    dataTable.row(rowIdx).invalidate().draw(false);
+                };
+
+                $input.on('keydown', async function (e) {
+                    if (e.key === 'Enter') {
+                        const newValue = $input.val().trim();
+
+                        // If nothing changed, restore view
+                        if (newValue === oldValue) {
+                            restoreOld();
+                            return;
+                        }
+
+                        // disable input while saving
+                        $input.prop('disabled', true);
+
+                        console.log("Attempting Firestore update:", { docId, fieldName, newValue });
+
+                        try {
+                            await updateDoc(doc(db, "registrations", docId), {
+                                [fieldName]: newValue
+                            });
+
+                            console.log("Firestore update SUCCESS", { docId, fieldName, newValue });
+
+                            // update UI cell and redraw current page (no full re-draw)
+                            cell.data(newValue);
+                            dataTable.row(rowIdx).invalidate().draw(false);
+                        } catch (err) {
+                            console.error("Firestore update ERROR:", err);
+
+                            // Friendly messages for common Firestore failure modes
+                            const msg = err?.message || String(err);
+                            if (err?.code === 'permission-denied' || /permission|insufficient/i.test(msg)) {
+                                alert("Update failed: insufficient permissions. Please update Firestore security rules to allow updates from this admin UI.\n\nSee console for details.");
+                            } else if (/network|unavailable/i.test(msg)) {
+                                alert("Update failed due to network error. Check your connection and try again.");
+                            } else {
+                                alert("Update failed: " + msg);
+                            }
+
+                            // restore previous value
+                            restoreOld();
+                        } finally {
+                            $input.prop('disabled', false);
+                        }
+                    } else if (e.key === 'Escape') {
+                        // cancel edit
+                        restoreOld();
+                    }
+                });
+
+                // blur => cancel (to avoid partial edits)
+                $input.on('blur', function () {
+                    // small timeout to allow Enter key to process first
+                    setTimeout(() => {
+                        restoreOld();
+                    }, 150);
+                });
+            });
         }
 
         // export function
@@ -497,7 +641,11 @@
             }
         });
     </script>
+
+
+
+
+
 </body>
 
 </html>
-
