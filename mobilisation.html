@@ -87,70 +87,16 @@
             document.getElementById("loadingSpinner").classList.toggle("hidden", !show);
         }
 
-        // Auto-assign using document ID order (client-side sort by doc.id)
-        // Each volunteer gets up to 8 participants. First 8 => vol1, next => vol2, etc.
-        async function autoAssignByDocId() {
-            showLoading(true);
-
-            const snapshot = await getDocs(collection(db, "registrations"));
-            const docs = snapshot.docs || [];
-
-            if (docs.length === 0) {
-                showLoading(false);
-                return [];
-            }
-
-            // Build entries with id and data
-            const entries = docs.map(ds => ({ id: ds.id, data: ds.data() || {} }));
-
-            // Sort by document ID (lexicographic). Deterministic ordering.
-            entries.sort((a, b) => a.id.localeCompare(b.id));
-
-            const capacityPerVol = 8;
-            const totalVols = 15;
-            const maxAssignable = capacityPerVol * totalVols; // 120
-
-            // Prepare assignments and update only when different
-            let updates = 0;
-            for (let i = 0; i < entries.length; i++) {
-                const entry = entries[i];
-                let newAssign;
-                if (i < maxAssignable) {
-                    const volNumber = Math.floor(i / capacityPerVol) + 1; // 1..15
-                    newAssign = "vol" + volNumber;
-                } else {
-                    newAssign = "unassigned";
-                }
-
-                const currentAssign = entry.data.assignedVolunteer || null;
-                if (currentAssign !== newAssign) {
-                    await updateDoc(doc(db, "registrations", entry.id), { assignedVolunteer: newAssign });
-                    updates++;
-                }
-            }
-
-            console.log("autoAssignByDocId - total docs:", entries.length, "updates:", updates);
-
-            // Return the sorted entries (with original data). Consumer will re-fetch to get latest data.
-            showLoading(false);
-            return entries;
-        }
-
         // Load and show assigned participants for the given volunteer
         async function loadVolunteerParticipants(volunteer) {
             showLoading(true);
 
-            // Recompute assignments deterministically by doc id
-            await autoAssignByDocId();
-
-            // Fetch all docs again to get updated assignedVolunteer fields
             const snapshot = await getDocs(collection(db, "registrations"));
             const docs = snapshot.docs || [];
 
-            // Build array sorted by doc.id again
+            // Filter participants only for this volunteer
             const assigned = docs
                 .map(ds => ({ id: ds.id, data: ds.data() || {} }))
-                .sort((a, b) => a.id.localeCompare(b.id))
                 .filter(item => (item.data.assignedVolunteer || null) === volunteer);
 
             // Update assigned count display
@@ -178,7 +124,19 @@
           <p class="text-sm"><b>Phone:</b> ${phoneLink}</p>
           <p class="text-sm"><b>Email:</b> ${d.email || ""}</p>
           <p class="text-sm"><b>Code:</b> ${d.code || ""}</p>
-          <p class="text-sm"><b>Status:</b> <span class="font-semibold">${d.status || ""}</span></p>
+          <p class="text-sm"><b>Status:</b>
+          <span class="font-semibold ${d.status === 'confirmed' ? 'text-green-600' :
+                        d.status === 'not_coming' ? 'text-red-600' :
+                            'text-gray-600'
+                    }">
+    ${d.status || "pending"}
+  </span>
+</p>
+
+            <p class="text-sm"><b>Code Shared:</b> <span class="font-semibold ${d.codeShared ? 'text-green-600' : 'text-red-600'}">
+    ${d.codeShared ? 'Yes' : 'No'}
+</span></p>
+
           <div class="mt-3 flex gap-2">
             <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" data-action="confirm">Confirm</button>
             <button class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700" data-action="notComing">Not Coming</button>
@@ -195,8 +153,7 @@
                         if (btn.dataset.action === "codeShared") update.codeShared = true;
 
                         await updateDoc(doc(db, "registrations", item.id), update);
-                        // reload view after change
-                        await loadVolunteerParticipants(volunteer);
+                        await loadVolunteerParticipants(volunteer); // refresh
                     });
                 });
 
@@ -205,7 +162,6 @@
 
             showLoading(false);
         }
-
     </script>
 </body>
 
