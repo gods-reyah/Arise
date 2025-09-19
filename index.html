@@ -159,90 +159,62 @@ https://templatemo.com/tm-597-neural-glass
 
 
     <section class="contact" id="contact">
-        <h2 class="section-title">REGISTRATION FORM</h2>
+        <h2 class="section-title">REGISTRATION CLOSED</h2>
 
         <div class="form-wrapper">
-            <form id="registrationForm" class="contact-form glass">
-
-                <div class="form-group">
-                    <input type="text" id="name" placeholder="Name" required>
-                </div>
-
-                <div class="form-group">
-                    <input type="text" id="department" placeholder="Department" required>
-                </div>
-
-                <div class="form-group">
-                    <input type="date" id="dob" required>
-                    <span class="placeholder">Date of Birth</span>
-                </div>
-
-
-                <!-- Gender -->
-                <div class="form-group">
-                    <select id="gender" required>
-                        <option value="" disabled selected>Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <input type="tel" id="phone" placeholder="Phone Number" required pattern="[0-9]{10}">
-                </div>
-
-                <div class="form-group">
-                    <input type="email" id="email" placeholder="Email" required>
-                </div>
-
-                <div class="form-group">
-                    <textarea id="address" rows="3" placeholder="Home Address" required></textarea>
-                </div>
-
-                <!-- First JY Program -->
-                <div class="form-group">
-                    <label class="question-label">Is it your First JY Program?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="firstYes" name="firstProgram" value="Yes" required>
-                        <label for="firstYes" class="radio-btn">Yes</label>
-
-                        <input type="radio" id="firstNo" name="firstProgram" value="No">
-                        <label for="firstNo" class="radio-btn">No</label>
-                    </div>
-                </div>
-
-                <!-- Hosteler -->
-                <div class="form-group">
-                    <label class="question-label">Are you a Hosteler?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="hostelYes" name="hosteler" value="Yes" required>
-                        <label for="hostelYes" class="radio-btn">Yes</label>
-
-                        <input type="radio" id="hostelNo" name="hosteler" value="No">
-                        <label for="hostelNo" class="radio-btn">No</label>
-                    </div>
-                </div>
-
-                <!-- Christian -->
-                <div class="form-group">
-                    <label class="question-label">Are you a Christian?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="christianYes" name="christian" value="Yes" required>
-                        <label for="christianYes" class="radio-btn">Yes</label>
-
-                        <input type="radio" id="christianNo" name="christian" value="No">
-                        <label for="christianNo" class="radio-btn">No</label>
-                    </div>
-                </div>
-
-
-
-                <button type="submit" class="submit-btn">SUBMIT</button>
-                <p id="confirmationMessage"
-                    style="display:none; text-align:center; margin-top:15px; color:#00ffcc; font-weight:bold;"></p>
-            </form>
+            <div class="glass closed-message">
+                <h3>We’re sorry! 🎉</h3>
+                <p>
+                    Registrations for this event are now
+                    <span class="highlight">officially closed</span>.
+                </p>
+                <p>
+                    Thank you for your overwhelming response 💙 <br>
+                    Stay tuned for our upcoming programs!
+                </p>
+            </div>
         </div>
     </section>
+
+    <style>
+        .closed-message {
+            padding: 40px;
+            text-align: center;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1.1rem;
+            animation: fadeIn 1.2s ease-in-out;
+        }
+
+        .closed-message h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #00ffcc;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .closed-message .highlight {
+            color: #00ffcc;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
 
 
     <style>
@@ -695,6 +667,7 @@ https://templatemo.com/tm-597-neural-glass
 </body>
 
 </html>
+
 
 
 
