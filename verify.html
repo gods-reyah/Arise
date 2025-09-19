@@ -7,30 +7,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-lg bg-white p-8 rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold text-center text-blue-700 mb-6">Verify Your Registration</h1>
+    <div class="w-full max-w-md bg-white p-6 sm:p-8 rounded-lg shadow-lg">
+        <!-- Title -->
+        <h1 class="text-xl sm:text-2xl font-bold text-center text-blue-700 mb-6">
+            Verify Your Registration
+        </h1>
 
-        <!-- Input -->
-        <div id="formSection" class="flex flex-col items-center gap-4">
+        <!-- Input Section -->
+        <div id="formSection" class="flex flex-col gap-3">
             <input id="codeInput" type="text" placeholder="Enter your unique code"
-                class="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <button id="verifyBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                class="w-full border rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+            <button id="verifyBtn"
+                class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition">
                 Search
             </button>
-            <p id="errorMsg" class="text-red-600 text-sm hidden">Invalid code. Please try again.</p>
+            <p id="errorMsg" class="text-red-600 text-sm hidden text-center">Invalid code. Please try again.</p>
         </div>
 
-        <!-- Result -->
+        <!-- Result Section -->
         <div id="resultSection" class="hidden mt-6">
-            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
-                <h2 class="text-xl font-bold mb-2 text-blue-700">Participant Profile</h2>
-                <div class="flex flex-col gap-2">
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+                <h2 class="text-lg sm:text-xl font-bold mb-3 text-blue-700">Participant Profile</h2>
+                <div class="space-y-2 text-sm sm:text-base">
                     <p><span class="font-semibold">Name:</span> <span id="resName"></span></p>
                     <p><span class="font-semibold">Phone:</span> <a id="resPhone" href="#"
-                            class="text-blue-600 underline"></a></p>
-                    <p><span class="font-semibold">Email:</span> <span id="resEmail"></span></p>
+                            class="text-blue-600 underline break-all"></a></p>
+                    <p><span class="font-semibold">Email:</span> <span id="resEmail" class="break-all"></span></p>
                     <p><span class="font-semibold">Code:</span> <span id="resCode"></span></p>
                     <p><span class="font-semibold">Status:</span> <span id="resStatus"></span></p>
                     <p><span class="font-semibold">Assigned Volunteer:</span> <span id="resVolunteer"></span></p>
@@ -39,12 +44,15 @@
                 </div>
             </div>
 
-            <!-- Action buttons -->
-            <div class="mt-4 flex justify-center gap-3">
-                <button id="attendanceBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Mark
-                    Verified</button>
-                <button onclick="resetForm()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-                    Verify Another Code
+            <!-- Action Buttons -->
+            <div class="mt-5 flex flex-col sm:flex-row gap-3">
+                <button id="attendanceBtn"
+                    class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700">
+                    Mark Verified
+                </button>
+                <button onclick="resetForm()"
+                    class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700">
+                    Verify Another
                 </button>
             </div>
         </div>
