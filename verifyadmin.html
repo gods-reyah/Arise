@@ -31,6 +31,15 @@
         <button id="refreshBtn" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
             Refresh
         </button>
+        <button onclick="checkDuplicateCodes()" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
+            Check Duplicate Codes
+        </button>
+        <button onclick="printAllCodes()" class="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">
+            Print Codes
+        </button>
+        <button onclick="saveAllChanges()" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+            Save All Changes
+        </button>
     </div>
 
     <!-- Summary counts -->
@@ -70,17 +79,28 @@
                     <th class="px-3 py-2 border">Status</th>
                     <th class="px-3 py-2 border">Volunteer</th>
                     <th class="px-3 py-2 border">Code Shared?</th>
-                    <th class="px-3 py-2 border">Actions</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 
+    <!-- Duplicate Codes Modal -->
+    <div id="duplicateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded shadow max-w-lg w-full">
+            <h2 class="text-lg font-bold mb-4">Duplicate Codes Report</h2>
+            <div id="duplicateList" class="max-h-64 overflow-y-auto text-sm"></div>
+            <div id="unusedCodes" class="mt-4 p-2 bg-gray-100 rounded text-sm"></div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="closeDuplicateModal()" class="bg-red-500 text-white px-3 py-1 rounded">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import {
-            getFirestore, collection, getDocs, doc, updateDoc
+            getFirestore, collection, getDocs, doc, updateDoc, writeBatch
         } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         // Firebase config
@@ -110,7 +130,7 @@
         }
 
         async function loadData() {
-            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Loading...</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Loading...</td></tr>`;
             const snapshot = await getDocs(collection(db, "registrations"));
             participants = snapshot.docs.map(ds => ({ id: ds.id, ...ds.data() }));
 
@@ -146,7 +166,7 @@
 
             tableBody.innerHTML = "";
             if (filtered.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">No results found</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">No results found</td></tr>`;
                 return;
             }
 
@@ -156,38 +176,164 @@
 
                 row.innerHTML = `
           <td class="border px-3 py-2 text-center">${index + 1}</td>
-          <td class="border px-3 py-2">${p.name || ""}</td>
-          <td class="border px-3 py-2">${p.phone || ""}</td>
-          <td class="border px-3 py-2">${p.email || ""}</td>
-          <td class="border px-3 py-2">${p.code || ""}</td>
-          <td class="border px-3 py-2 font-semibold">${p.status || ""}</td>
-          <td class="border px-3 py-2">${p.assignedVolunteer || "unassigned"}</td>
-          <td class="border px-3 py-2 text-center">${p.codeShared ? "✅" : "❌"}</td>
+          <td class="border px-3 py-2"><input value="${p.name || ""}" data-id="${p.id}" data-field="name" class="border rounded px-1 py-0.5 w-full"></td>
+          <td class="border px-3 py-2"><input value="${p.phone || ""}" data-id="${p.id}" data-field="phone" class="border rounded px-1 py-0.5 w-full"></td>
+          <td class="border px-3 py-2"><input value="${p.email || ""}" data-id="${p.id}" data-field="email" class="border rounded px-1 py-0.5 w-full"></td>
+          <td class="border px-3 py-2"><input value="${p.code || ""}" data-id="${p.id}" data-field="code" class="border rounded px-1 py-0.5 w-full"></td>
           <td class="border px-3 py-2">
-            <div class="flex flex-col gap-1">
-              <button class="bg-green-600 text-white px-2 py-1 text-sm rounded" data-action="confirm">Confirm</button>
-              <button class="bg-red-600 text-white px-2 py-1 text-sm rounded" data-action="notComing">Not Coming</button>
-              <button class="bg-blue-600 text-white px-2 py-1 text-sm rounded" data-action="codeShared">Code Shared</button>
-            </div>
+            <select data-id="${p.id}" data-field="status" class="border rounded px-1 py-0.5 w-full">
+              <option value="">--</option>
+              <option value="registered" ${p.status === "registered" ? "selected" : ""}>Registered</option>
+              <option value="confirmed" ${p.status === "confirmed" ? "selected" : ""}>Confirmed</option>
+              <option value="not_coming" ${p.status === "not_coming" ? "selected" : ""}>Not Coming</option>
+            </select>
+          </td>
+          <td class="border px-3 py-2">
+            <select data-id="${p.id}" data-field="assignedVolunteer" class="border rounded px-1 py-0.5 w-full">
+              <option value="">Unassigned</option>
+              ${Array.from({ length: 15 }, (_, i) => {
+                    const v = "vol" + (i + 1);
+                    return `<option value="${v}" ${p.assignedVolunteer === v ? "selected" : ""}>${v}</option>`;
+                }).join("")}
+            </select>
+          </td>
+          <td class="border px-3 py-2 text-center">
+            <input type="checkbox" data-id="${p.id}" data-field="codeShared" ${p.codeShared ? "checked" : ""}>
           </td>
         `;
-
-                // Actions
-                row.querySelectorAll("button").forEach(btn => {
-                    btn.addEventListener("click", async () => {
-                        let update = {};
-                        if (btn.dataset.action === "confirm") update.status = "confirmed";
-                        if (btn.dataset.action === "notComing") update.status = "not_coming";
-                        if (btn.dataset.action === "codeShared") update.codeShared = true;
-
-                        await updateDoc(doc(db, "registrations", p.id), update);
-                        await loadData(); // refresh
-                    });
-                });
 
                 tableBody.appendChild(row);
             });
         }
+
+        // Generate unique 4-digit numeric code
+        function generateCode() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        // Save all changes
+        async function saveAllChanges() {
+            const inputs = document.querySelectorAll("[data-field]");
+            const batch = writeBatch(db);
+
+            const updates = {};
+            inputs.forEach(el => {
+                const id = el.dataset.id;
+                const field = el.dataset.field;
+                let val = el.type === "checkbox" ? el.checked : el.value.trim();
+                if (val === "") val = null;
+                if (!updates[id]) updates[id] = {};
+                updates[id][field] = val;
+            });
+
+            // ensure codes are unique 4-digit
+            const existingCodes = new Set(
+                Object.values(updates).map(u => u.code).filter(Boolean)
+            );
+
+            for (const [id, update] of Object.entries(updates)) {
+                if (update.code === null || update.code === "" || existingCodes.size !== new Set(existingCodes).size) {
+                    let newCode;
+                    do {
+                        newCode = generateCode();
+                    } while (existingCodes.has(newCode));
+                    update.code = newCode;
+                    existingCodes.add(newCode);
+                }
+                batch.update(doc(db, "registrations", id), update);
+            }
+
+            tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Saving all changes...</td></tr>`;
+            await batch.commit();
+            await loadData();
+            alert("All changes saved successfully!");
+        }
+        window.saveAllChanges = saveAllChanges;
+
+        // Check duplicate codes
+        function checkDuplicateCodes() {
+            const duplicateList = document.getElementById("duplicateList");
+            const unusedCodes = document.getElementById("unusedCodes");
+
+            duplicateList.innerHTML = `<div class="flex items-center gap-2 text-blue-600"><span class="animate-spin">⏳</span> Checking codes...</div>`;
+            unusedCodes.innerHTML = "";
+
+            setTimeout(() => {
+                const codesMap = {};
+                const duplicates = [];
+
+                participants.forEach(p => {
+                    if (p.code) {
+                        if (!codesMap[p.code]) {
+                            codesMap[p.code] = [];
+                        }
+                        codesMap[p.code].push(p);
+                    }
+                });
+
+                for (const [code, list] of Object.entries(codesMap)) {
+                    if (list.length > 1) {
+                        duplicates.push({ code, list });
+                    }
+                }
+
+                duplicateList.innerHTML = "";
+                if (duplicates.length === 0) {
+                    duplicateList.innerHTML = `<p class="text-green-600">No duplicate codes found ✅</p>`;
+                } else {
+                    duplicates.forEach(d => {
+                        const div = document.createElement("div");
+                        div.className = "mb-2";
+                        div.innerHTML = `<p class="font-semibold text-red-600">Code: ${d.code} (x${d.list.length})</p>
+              <ul class="list-disc list-inside">${d.list.map(p => `<li>${p.name} - ${p.phone}</li>`).join("")}</ul>`;
+                        duplicateList.appendChild(div);
+                    });
+                }
+
+                // Generate 10 unused 4-digit codes
+                const existingCodes = new Set(participants.map(p => p.code).filter(Boolean));
+                const newCodes = [];
+                while (newCodes.length < 10) {
+                    const code = generateCode();
+                    if (!existingCodes.has(code)) {
+                        newCodes.push(code);
+                    }
+                }
+
+                unusedCodes.innerHTML = `
+          <p class="font-semibold mb-1">Suggested Unused Codes:</p>
+          <div class="grid grid-cols-2 gap-2">
+            ${newCodes.map(c => `<span class="px-2 py-1 bg-green-100 border rounded">${c}</span>`).join("")}
+          </div>
+        `;
+            }, 800);
+            document.getElementById("duplicateModal").classList.remove("hidden");
+        }
+        window.checkDuplicateCodes = checkDuplicateCodes;
+
+        // Print / Copy all unique codes
+        function printAllCodes() {
+            const codes = participants.map(p => p.code).filter(Boolean);
+            if (codes.length === 0) {
+                alert("No codes found in database.");
+                return;
+            }
+            const uniqueCodes = [...new Set(codes)];
+            navigator.clipboard.writeText(uniqueCodes.join("\n"))
+                .then(() => {
+                    alert("All unique codes copied to clipboard!\n\n" + uniqueCodes.join("\n"));
+                })
+                .catch(err => {
+                    console.error("Clipboard copy failed:", err);
+                    alert("Failed to copy codes.");
+                });
+        }
+        window.printAllCodes = printAllCodes;
+
+        function closeDuplicateModal() {
+            document.getElementById("duplicateModal").classList.add("hidden");
+        }
+        window.closeDuplicateModal = closeDuplicateModal;
 
         // Event listeners
         volunteerFilter.addEventListener("change", renderTable);
@@ -197,7 +343,7 @@
         // Load initial
         loadData();
 
-        // Logout (back to mobilisation.html login)
+        // Logout
         function logout() {
             window.location.href = "mobilisation.html";
         }
