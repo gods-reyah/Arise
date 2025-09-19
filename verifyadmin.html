@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Mobilisation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-700 text-white p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold">Admin Dashboard</h1>
+        <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Logout</button>
+    </header>
+
+    <!-- Filters -->
+    <div class="p-4 bg-white shadow flex flex-wrap gap-4 items-center">
+        <div>
+            <label class="mr-2 font-semibold">Filter by Volunteer:</label>
+            <select id="volunteerFilter" class="border rounded px-2 py-1">
+                <option value="all">All</option>
+                <option value="unassigned">Unassigned</option>
+            </select>
+        </div>
+        <div>
+            <input id="searchInput" type="text" placeholder="Search name, phone, email..."
+                class="border rounded px-3 py-1 w-64">
+        </div>
+        <button id="refreshBtn" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+            Refresh
+        </button>
+    </div>
+
+    <!-- Summary counts -->
+    <div id="summary" class="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div class="bg-white p-3 rounded shadow text-center">
+            <p class="text-gray-500 text-sm">Total</p>
+            <p id="countTotal" class="text-xl font-bold">0</p>
+        </div>
+        <div class="bg-white p-3 rounded shadow text-center">
+            <p class="text-gray-500 text-sm">Registered</p>
+            <p id="countRegistered" class="text-xl font-bold">0</p>
+        </div>
+        <div class="bg-white p-3 rounded shadow text-center">
+            <p class="text-gray-500 text-sm">Confirmed</p>
+            <p id="countConfirmed" class="text-xl font-bold">0</p>
+        </div>
+        <div class="bg-white p-3 rounded shadow text-center">
+            <p class="text-gray-500 text-sm">Not Coming</p>
+            <p id="countNotComing" class="text-xl font-bold">0</p>
+        </div>
+        <div class="bg-white p-3 rounded shadow text-center">
+            <p class="text-gray-500 text-sm">Code Shared</p>
+            <p id="countCodeShared" class="text-xl font-bold">0</p>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="p-4 overflow-x-auto flex-1">
+        <table class="min-w-full border bg-white shadow">
+            <thead class="bg-gray-200">
+                <tr>
+                    <th class="px-3 py-2 border">#</th>
+                    <th class="px-3 py-2 border">Name</th>
+                    <th class="px-3 py-2 border">Phone</th>
+                    <th class="px-3 py-2 border">Email</th>
+                    <th class="px-3 py-2 border">Code</th>
+                    <th class="px-3 py-2 border">Status</th>
+                    <th class="px-3 py-2 border">Volunteer</th>
+                    <th class="px-3 py-2 border">Code Shared?</th>
+                    <th class="px-3 py-2 border">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import {
+            getFirestore, collection, getDocs, doc, updateDoc
+        } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
+            authDomain: "arise-2d007.firebaseapp.com",
+            projectId: "arise-2d007",
+            storageBucket: "arise-2d007.firebasestorage.app",
+            messagingSenderId: "243777013461",
+            appId: "1:243777013461:web:d16ce794588d79662f045c"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const tableBody = document.getElementById("tableBody");
+        const volunteerFilter = document.getElementById("volunteerFilter");
+        const searchInput = document.getElementById("searchInput");
+
+        let participants = [];
+
+        // Fill volunteer filter options
+        for (let i = 1; i <= 15; i++) {
+            const opt = document.createElement("option");
+            opt.value = "vol" + i;
+            opt.textContent = "Volunteer " + i;
+            volunteerFilter.appendChild(opt);
+        }
+
+        async function loadData() {
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Loading...</td></tr>`;
+            const snapshot = await getDocs(collection(db, "registrations"));
+            participants = snapshot.docs.map(ds => ({ id: ds.id, ...ds.data() }));
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const filter = volunteerFilter.value;
+            const search = searchInput.value.toLowerCase();
+
+            let filtered = participants.filter(p => {
+                let ok = true;
+                if (filter !== "all") {
+                    ok = (p.assignedVolunteer || "unassigned") === filter;
+                }
+                if (search) {
+                    const text = `${p.name || ""} ${p.phone || ""} ${p.email || ""}`.toLowerCase();
+                    ok = ok && text.includes(search);
+                }
+                return ok;
+            });
+
+            // update summary counts
+            document.getElementById("countTotal").textContent = participants.length;
+            document.getElementById("countRegistered").textContent =
+                participants.filter(p => p.status === "registered").length;
+            document.getElementById("countConfirmed").textContent =
+                participants.filter(p => p.status === "confirmed").length;
+            document.getElementById("countNotComing").textContent =
+                participants.filter(p => p.status === "not_coming").length;
+            document.getElementById("countCodeShared").textContent =
+                participants.filter(p => p.codeShared === true).length;
+
+            tableBody.innerHTML = "";
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4">No results found</td></tr>`;
+                return;
+            }
+
+            filtered.forEach((p, index) => {
+                const row = document.createElement("tr");
+                row.className = "hover:bg-gray-50";
+
+                row.innerHTML = `
+          <td class="border px-3 py-2 text-center">${index + 1}</td>
+          <td class="border px-3 py-2">${p.name || ""}</td>
+          <td class="border px-3 py-2">${p.phone || ""}</td>
+          <td class="border px-3 py-2">${p.email || ""}</td>
+          <td class="border px-3 py-2">${p.code || ""}</td>
+          <td class="border px-3 py-2 font-semibold">${p.status || ""}</td>
+          <td class="border px-3 py-2">${p.assignedVolunteer || "unassigned"}</td>
+          <td class="border px-3 py-2 text-center">${p.codeShared ? "✅" : "❌"}</td>
+          <td class="border px-3 py-2">
+            <div class="flex flex-col gap-1">
+              <button class="bg-green-600 text-white px-2 py-1 text-sm rounded" data-action="confirm">Confirm</button>
+              <button class="bg-red-600 text-white px-2 py-1 text-sm rounded" data-action="notComing">Not Coming</button>
+              <button class="bg-blue-600 text-white px-2 py-1 text-sm rounded" data-action="codeShared">Code Shared</button>
+            </div>
+          </td>
+        `;
+
+                // Actions
+                row.querySelectorAll("button").forEach(btn => {
+                    btn.addEventListener("click", async () => {
+                        let update = {};
+                        if (btn.dataset.action === "confirm") update.status = "confirmed";
+                        if (btn.dataset.action === "notComing") update.status = "not_coming";
+                        if (btn.dataset.action === "codeShared") update.codeShared = true;
+
+                        await updateDoc(doc(db, "registrations", p.id), update);
+                        await loadData(); // refresh
+                    });
+                });
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Event listeners
+        volunteerFilter.addEventListener("change", renderTable);
+        searchInput.addEventListener("input", renderTable);
+        document.getElementById("refreshBtn").addEventListener("click", loadData);
+
+        // Load initial
+        loadData();
+
+        // Logout (back to mobilisation.html login)
+        function logout() {
+            window.location.href = "mobilisation.html";
+        }
+        window.logout = logout;
+    </script>
+</body>
+
+</html>

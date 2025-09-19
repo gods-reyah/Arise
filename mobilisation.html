@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Mobilisation Team System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <!-- Login Page -->
+    <div id="loginPage" class="w-full max-w-sm bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-4 text-center">Mobilisation Login</h1>
+        <input id="username" type="text" placeholder="Username" class="w-full border px-3 py-2 rounded mb-3" />
+        <input id="password" type="password" placeholder="Password" class="w-full border px-3 py-2 rounded mb-3" />
+        <button id="loginBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+        <p id="loginError" class="text-red-600 text-sm mt-2 hidden">Invalid login</p>
+    </div>
+
+    <!-- Volunteer Dashboard -->
+    <div id="volunteerPage" class="hidden w-full max-w-6xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold">Welcome, <span id="volunteerName"></span></h1>
+            <div id="assignedCount" class="text-sm text-gray-600"></div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="flex items-center justify-center py-10 hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+        </div>
+
+        <!-- Cards -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import {
+            getFirestore, collection, getDocs, doc, updateDoc
+        } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        // ---------- FIREBASE CONFIG ----------
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEA64VWu2aELuNYuLvpu_QhdMuhYgNKZ0",
+            authDomain: "arise-2d007.firebaseapp.com",
+            projectId: "arise-2d007",
+            storageBucket: "arise-2d007.firebasestorage.app",
+            messagingSenderId: "243777013461",
+            appId: "1:243777013461:web:d16ce794588d79662f045c"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ---------- SIMPLE FRONTEND USERS ----------
+        const users = {
+            "admin": "admin123",
+            "vol1": "pass1", "vol2": "pass2", "vol3": "pass3", "vol4": "pass4", "vol5": "pass5",
+            "vol6": "pass6", "vol7": "pass7", "vol8": "pass8", "vol9": "pass9", "vol10": "pass10",
+            "vol11": "pass11", "vol12": "pass12", "vol13": "pass13", "vol14": "pass14", "vol15": "pass15"
+        };
+
+        let currentUser = null;
+
+        document.getElementById("loginBtn").addEventListener("click", () => {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            document.getElementById("loginError").classList.add("hidden");
+
+            if (users[username] && users[username] === password) {
+                currentUser = username;
+                if (username === "admin") {
+                    window.location.href = "verifyadmin.html";
+                } else {
+                    document.getElementById("loginPage").classList.add("hidden");
+                    document.getElementById("volunteerPage").classList.remove("hidden");
+                    document.getElementById("volunteerName").textContent = username;
+                    loadVolunteerParticipants(username);
+                }
+            } else {
+                document.getElementById("loginError").classList.remove("hidden");
+            }
+        });
+
+        // show/hide spinner
+        function showLoading(show) {
+            document.getElementById("loadingSpinner").classList.toggle("hidden", !show);
+        }
+
+        // Auto-assign using document ID order (client-side sort by doc.id)
+        // Each volunteer gets up to 8 participants. First 8 => vol1, next => vol2, etc.
+        async function autoAssignByDocId() {
+            showLoading(true);
+
+            const snapshot = await getDocs(collection(db, "registrations"));
+            const docs = snapshot.docs || [];
+
+            if (docs.length === 0) {
+                showLoading(false);
+                return [];
+            }
+
+            // Build entries with id and data
+            const entries = docs.map(ds => ({ id: ds.id, data: ds.data() || {} }));
+
+            // Sort by document ID (lexicographic). Deterministic ordering.
+            entries.sort((a, b) => a.id.localeCompare(b.id));
+
+            const capacityPerVol = 8;
+            const totalVols = 15;
+            const maxAssignable = capacityPerVol * totalVols; // 120
+
+            // Prepare assignments and update only when different
+            let updates = 0;
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                let newAssign;
+                if (i < maxAssignable) {
+                    const volNumber = Math.floor(i / capacityPerVol) + 1; // 1..15
+                    newAssign = "vol" + volNumber;
+                } else {
+                    newAssign = "unassigned";
+                }
+
+                const currentAssign = entry.data.assignedVolunteer || null;
+                if (currentAssign !== newAssign) {
+                    await updateDoc(doc(db, "registrations", entry.id), { assignedVolunteer: newAssign });
+                    updates++;
+                }
+            }
+
+            console.log("autoAssignByDocId - total docs:", entries.length, "updates:", updates);
+
+            // Return the sorted entries (with original data). Consumer will re-fetch to get latest data.
+            showLoading(false);
+            return entries;
+        }
+
+        // Load and show assigned participants for the given volunteer
+        async function loadVolunteerParticipants(volunteer) {
+            showLoading(true);
+
+            // Recompute assignments deterministically by doc id
+            await autoAssignByDocId();
+
+            // Fetch all docs again to get updated assignedVolunteer fields
+            const snapshot = await getDocs(collection(db, "registrations"));
+            const docs = snapshot.docs || [];
+
+            // Build array sorted by doc.id again
+            const assigned = docs
+                .map(ds => ({ id: ds.id, data: ds.data() || {} }))
+                .sort((a, b) => a.id.localeCompare(b.id))
+                .filter(item => (item.data.assignedVolunteer || null) === volunteer);
+
+            // Update assigned count display
+            document.getElementById("assignedCount").textContent = `Assigned: ${assigned.length}`;
+
+            const container = document.getElementById("cardsContainer");
+            container.innerHTML = "";
+
+            if (assigned.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500">No participants assigned to ${volunteer}.</p>`;
+                showLoading(false);
+                return;
+            }
+
+            // Render cards
+            for (const item of assigned) {
+                const d = item.data;
+                const card = document.createElement("div");
+                card.className = "bg-white p-4 rounded shadow";
+
+                const phoneLink = d.phone ? `<a href="tel:${d.phone}" class="text-blue-600 underline">${d.phone}</a>` : "";
+
+                card.innerHTML = `
+          <h2 class="font-bold text-lg mb-2">${d.name || ""}</h2>
+          <p class="text-sm"><b>Phone:</b> ${phoneLink}</p>
+          <p class="text-sm"><b>Email:</b> ${d.email || ""}</p>
+          <p class="text-sm"><b>Code:</b> ${d.code || ""}</p>
+          <p class="text-sm"><b>Status:</b> <span class="font-semibold">${d.status || ""}</span></p>
+          <div class="mt-3 flex gap-2">
+            <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" data-action="confirm">Confirm</button>
+            <button class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700" data-action="notComing">Not Coming</button>
+            <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700" data-action="codeShared">Code Shared</button>
+          </div>
+        `;
+
+                // Button actions
+                card.querySelectorAll("button").forEach(btn => {
+                    btn.addEventListener("click", async () => {
+                        let update = {};
+                        if (btn.dataset.action === "confirm") update.status = "confirmed";
+                        if (btn.dataset.action === "notComing") update.status = "not_coming";
+                        if (btn.dataset.action === "codeShared") update.codeShared = true;
+
+                        await updateDoc(doc(db, "registrations", item.id), update);
+                        // reload view after change
+                        await loadVolunteerParticipants(volunteer);
+                    });
+                });
+
+                container.appendChild(card);
+            }
+
+            showLoading(false);
+        }
+
+    </script>
+</body>
+
+</html>
